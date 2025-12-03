@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import random 
 
 # --- Clase Nodo y Estructura KD-Tree ---
 class Node:

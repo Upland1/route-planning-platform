@@ -69,8 +69,8 @@ if __name__ == "__main__":
     
     print(f"Total time to build KD-Tree: {total_time:.6f} seconds")
     
-    print("\n--- INICIANDO COMPARACIÓN (20 Puntos) ---\n")
-    print(f"{'Punto (X, Y)':<30} | {'KD-Tree (s)':<15} | {'Exhaustiva (s)':<15} | {'Ganador'}")
+    print("\n--- STARTING COMPARISON (20 points) ---\n")
+    print(f"{'Point (X, Y)':<30} | {'KD-Tree (s)':<15} | {'Exhaustive (s)':<15} | {'Winner'}")
     print("-" * 80)
 
     test_points = generate_random_points(nodes_list)
@@ -78,15 +78,13 @@ if __name__ == "__main__":
     total_ex = 0
 
     for i, p in enumerate(test_points):
-        # 1. Medir KD-Tree
-        start = time.perf_counter() # perf_counter es más preciso que time.time()
-        # Asumiendo que tu KDTree tiene un método 'closest_point' o similar
-        # Si tu KDTree devuelve el punto, asegúrate de recuperar el ID del nodo después si es necesario
+        
+        start = time.perf_counter() 
+        
         _ = kd_tree.closest_point(p) 
         end = time.perf_counter()
         time_kd = end - start
         
-        # 2. Medir Exhaustiva
         start = time.perf_counter()
         _ = exhaustive_search(nodes_list, p)
         end = time.perf_counter()
@@ -96,8 +94,8 @@ if __name__ == "__main__":
         total_ex += time_ex
         
         speedup = time_ex / time_kd if time_kd > 0 else 0
-        print(f"Pto {i+1}: ({p[0]:.1f}, {p[1]:.1f})   | {time_kd:.6f} s      | {time_ex:.6f} s      | KD es {speedup:.1f}x más rápido")
+        print(f"Pto {i+1}: ({p[0]:.1f}, {p[1]:.1f})   | {time_kd:.6f} s      | {time_ex:.6f} s      | KD is {speedup:.1f}x way more faster")
 
     print("-" * 80)
-    print(f"Promedio KD-Tree:   {total_kd/20:.6f} s")
-    print(f"Promedio Exhaustiva: {total_ex/20:.6f} s")
+    print(f"Average Time KD-Tree:   {total_kd/20:.6f} s")
+    print(f"Average Time Exhaustive: {total_ex/20:.6f} s")
