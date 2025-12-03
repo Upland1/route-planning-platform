@@ -16,9 +16,6 @@ class KDTree:
         self.root = self.build_kd_tree(points, depth=0)
 
     def build_kd_tree(self, points, depth):
-        """
-        Implementación del algoritmo de la diapositiva 22.
-        """
         if not points:
             return None
         
@@ -55,9 +52,6 @@ class KDTree:
         return found_points
 
     def search_kd_tree(self, node, region, found):
-        """
-        Implementación del algoritmo de la diapositiva 35.
-        """
         if node is None:
             return
 
@@ -130,62 +124,57 @@ class KDTree:
 
         recur(self.root)
         return best['point']
+
+    def query(self, target):
+        """
+        Return a tuple (distance, index) for the nearest neighbour.
+        """
+        if self.root is None:
+            return (None, None)
+
+        tx, ty = target
+        best = {'point': None, 'dist': float('inf')}
+
+        def recur(node):
+            if node is None:
+                return
+
+            if node.point is not None:
+                p = node.point
+                px, py = p[0], p[1]
+                d2 = (px - tx) ** 2 + (py - ty) ** 2
+                if d2 < best['dist']:
+                    best['point'] = p
+                    best['dist'] = d2
+                return
+
+            axis = node.split_axis
+            coord = tx if axis == 0 else ty
+
+            if coord <= node.split_value:
+                near, far = node.left, node.right
+            else:
+                near, far = node.right, node.left
+
+            if near is not None:
+                recur(near)
+
+            plane_dist2 = (coord - node.split_value) ** 2
+            if plane_dist2 <= best['dist']:
+                if far is not None:
+                    recur(far)
+
+        recur(self.root)
+
+        if best['point'] is None:
+            return (None, None)
+
+        idx = None
+        try:
+            if len(best['point']) >= 3:
+                idx = best['point'][2]
+        except Exception:
+            idx = None
+
+        return (best['dist'] ** 0.5, idx)
     
-if __name__ == "__main__":
-    # Demo/ejemplo: generación de puntos, construcción del árbol y guardado de figura.
-    random.seed(42) # Para reproducibilidad
-    points_200 = [(random.uniform(-10, 10), random.uniform(-10, 10)) for _ in range(200)]
-
-    # Construir el árbol
-    tree = KDTree(points_200)
-
-    # --- Consultas y Gráficas (ejemplo) ---
-    queries = [
-        ([-1, 1], [-2, 2]),
-        ([-2, 1], [3, 5]),
-        ([-7, 0], [-6, 4]),
-        ([-2, 2], [-3, 3]),
-        ([-7, 5], [-3, 1])
-    ]
-
-    # Configuración de subplots
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    axes = axes.flatten()
-
-    # Graficar todos los puntos inicialmente (sin filtro)
-    ax = axes[0]
-    x_vals, y_vals = zip(*points_200)
-    ax.scatter(x_vals, y_vals, c='lightgray', label='Puntos')
-    ax.set_title("Totalidad de Puntos (200)")
-    ax.set_xlim(-10, 10)
-    ax.set_ylim(-10, 10)
-    ax.grid(True)
-
-    # Ejecutar búsquedas y graficar
-    for i, (xr, yr) in enumerate(queries):
-        ax = axes[i+1]
-        
-        # Buscar
-        found = tree.search(xr, yr)
-        
-        # Graficar puntos de fondo
-        ax.scatter(x_vals, y_vals, c='lightgray', alpha=0.5)
-        
-        # Graficar puntos encontrados
-        if found:
-            fx, fy = zip(*found)
-            ax.scatter(fx, fy, c='red', label='Encontrados')
-        
-        # Dibujar rectángulo de búsqueda
-        width = xr[1] - xr[0]
-        height = yr[1] - yr[0]
-        rect = patches.Rectangle((xr[0], yr[0]), width, height, linewidth=2, edgecolor='blue', facecolor='none')
-        ax.add_patch(rect)
-        
-        ax.set_title(f"Rango: X{xr}, Y{yr}\nEncontrados: {len(found)}")
-        ax.set_xlim(-10, 10)
-        ax.set_ylim(-10, 10)
-        ax.grid(True)
-
-    plt.tight_layout()
-    plt.savefig('kd_tree_results.png')
