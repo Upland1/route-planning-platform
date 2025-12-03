@@ -1,0 +1,13 @@
+osmnx
+geopandas
+numpy
+scipy
+matplotlib
+networkx
+fastapi
+uvicorn[standard]
+shapely
+rtree
+pyproj
+fiona
+pandas
