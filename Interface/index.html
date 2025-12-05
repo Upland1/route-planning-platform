@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Emergency Response System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; display: flex; }
+        #sidebar { width: 300px; background: #2c3e50; color: white; padding: 20px; height: 100vh; }
+        #map { flex-grow: 1; height: 100vh; }
+        .btn { background: #e74c3c; color: white; padding: 10px; border: none; cursor: pointer; width: 100%; margin-top: 20px;}
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Sistema de Emergencias</h2>
+        <p>Haz clic en el mapa para simular una emergencia.</p>
+        <div id="info">Esperando ubicación...</div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Inicializar el mapa
+        var map = L.map('map').setView([20.72, -103.39], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // --- VARIABLES GLOBALES PARA CONTROLAR EL MAPA ---
+        var currentRouteLayer = null; // Para borrar la línea roja vieja
+        var currentMarker = null;     // <--- NUEVO: Para borrar la chincheta vieja
+
+        // 3. Evento Click
+        map.on('click', async function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            document.getElementById('info').innerHTML = `Analizando coordenadas:<br>Lat: ${lat.toFixed(4)}<br>Lon: ${lng.toFixed(4)}`;
+
+            // --- LIMPIEZA DE MARCADORES ANTERIORES ---
+            // Si ya existe un marcador, bórralo antes de poner el nuevo
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            // Crear el nuevo marcador y guardarlo en la variable global
+            currentMarker = L.marker([lat, lng])
+                .addTo(map)
+                .bindPopup("Emergencia Aquí")
+                .openPopup();
+
+            // --- CONEXIÓN CON PYTHON ---
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/calcular-ruta/?lat=${lat}&lon=${lng}`);
+                const data = await response.json();
+
+                // Limpieza de ruta anterior
+                if (currentRouteLayer) {
+                    map.removeLayer(currentRouteLayer);
+                }
+                
+                // Dibujar nueva ruta
+                if (data.ruta) {
+                    currentRouteLayer = L.geoJSON(data.ruta, {
+                        style: { color: "#ff0000", weight: 5 }
+                    }).addTo(map);
+                    
+                    // Opcional: Ajustar zoom para ver toda la ruta
+                    // map.fitBounds(currentRouteLayer.getBounds());
+                } else {
+                     console.log("No se recibió ruta válida o hubo error en el cálculo");
+                }
+
+            } catch (error) {
+                console.error("Error conectando con Python:", error);
+            }
+        });
+    </script>
+</body>
+</html>
