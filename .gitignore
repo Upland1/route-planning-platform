@@ -93,3 +93,4 @@ desktop.ini
 # Keep project cache folder tracked (contains JSON used by the project)
 !cache/
 !cache/**
+cache/
