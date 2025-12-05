@@ -1,7 +1,8 @@
 import osmnx as ox
 import numpy as np
 import networkx as nx
-from scipy.spatial import Voronoi, voronoi_plot_2d, KDTree # Using scipy's KDTree for compatibility
+from Interface.KDTree import KDTree
+from scipy.spatial import Voronoi, voronoi_plot_2d
 import matplotlib.pyplot as plt
 
 def bring_map_data(place: str):
@@ -83,13 +84,9 @@ def generate_voronoi(hospitals_coords, G):
     plt.show()
 
 def emergency_routing_system(G, hospitals_coords, hospitals_nodes, origin_node=None):
-    """
-    Ahora acepta 'origin_node'. Si viene None, genera uno aleatorio.
-    Devuelve el camino (lista de nodos) y la info del hospital.
-    """
     tree_hospitals = KDTree(hospitals_coords)
     
-    # 1. LÓGICA DE ORIGEN: ¿Me dieron un nodo o invento uno?
+    # If there's no origin node
     if origin_node is None:
         node_ids = list(G.nodes())
         origin_node = node_ids[np.random.randint(len(node_ids))]
@@ -97,11 +94,19 @@ def emergency_routing_system(G, hospitals_coords, hospitals_nodes, origin_node=N
     x_orig = G.nodes[origin_node]['x']
     y_orig = G.nodes[origin_node]['y']
     
-    # 2. Buscar hospital más cercano (Voronoi/KDTree)
+    # Search for the nearest hospital (Voronoi/KDTree)
     dist, idx_hospital = tree_hospitals.query((x_orig, y_orig))
-    hospital_assigned_node = hospitals_nodes[idx_hospital]
+    if idx_hospital is None:
+        if isinstance(hospitals_coords, np.ndarray) and hospitals_coords.size > 0:
+            d2 = (hospitals_coords[:,0] - x_orig) ** 2 + (hospitals_coords[:,1] - y_orig) ** 2
+            idx_hospital = int(np.argmin(d2))
+        else:
+            # No hospitals available
+            return None, None
+
+    hospital_assigned_node = hospitals_nodes[int(idx_hospital)]
     
-    # 3. Calcular ruta
+    # Calculate route
     try:
         route = nx.shortest_path(G, origin_node, hospital_assigned_node, weight='length')
         return route, hospital_assigned_node

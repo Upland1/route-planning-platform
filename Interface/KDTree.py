@@ -1,41 +1,41 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import random
 
-# --- Clase Nodo y Estructura KD-Tree ---
 class Node:
     def __init__(self, point=None, left=None, right=None, split_axis=None, split_value=None):
-        self.point = point          # Valor si es hoja
-        self.left = left            # Hijo izquierdo
-        self.right = right          # Hijo derecho
-        self.split_axis = split_axis # Eje de división (0=x, 1=y)
-        self.split_value = split_value # Valor de la mediana
+        self.point = point          # If value is leaf
+        self.left = left            # Left children
+        self.right = right          # Right children
+        self.split_axis = split_axis # Dividing axis (0=x, 1=y)
+        self.split_value = split_value # Median value
 
 class KDTree:
     def __init__(self, points):
         self.root = self.build_kd_tree(points, depth=0)
 
     def build_kd_tree(self, points, depth):
+        # Normalize input
+        points = [tuple(p) for p in points]
+
         if not points:
             return None
         
-        k = 2 # Dimensión (2D)
-        axis = depth % k # Alternar ejes: par->x, impar->y (Slide 22)
+        k = 2 # 2D
+        axis = depth % k # Alternate axis: even->x, odd->y 
         
-        # Caso base: Si es un solo punto, regresar nodo hoja (Slide 22)
+        # Base case: If only one point, return leaf node
         if len(points) == 1:
             return Node(point=points[0])
         
-        # Ordenar puntos y encontrar la mediana
+        # Sort points and find median
         points.sort(key=lambda x: x[axis])
         mid = len(points) // 2
         median_point = points[mid]
         
-        # El valor de división es la coordenada del punto mediano
+        # Dividing value is the median point coordinate point
         split_value = median_point[axis]
         
-        # Dividir conjuntos (Slide 22)
-        # points_left: incluye la mediana según la lógica común de partición <=
+        # Divide sets
         points_left = points[:mid]
         points_right = points[mid:]
         
@@ -55,25 +55,23 @@ class KDTree:
         if node is None:
             return
 
-        # Si es nodo hoja (Slide 35)
+        # If it's leaf
         if node.point is not None:
             px, py = node.point
-            # Reporta si está dentro de la región
             if (region['x'][0] <= px <= region['x'][1] and 
                 region['y'][0] <= py <= region['y'][1]):
                 found.append(node.point)
             return
 
-        # Lógica de intersección de regiones (Slide 35)
-        # Eje 0 es x, Eje 1 es y
+        # Region Intersection Logic
         axis_name = 'x' if node.split_axis == 0 else 'y'
         min_val, max_val = region[axis_name]
         
-        # Si la región se intercepta con la rama izquierda (valores <= split_value)
+        # If region intercepts left branch 
         if min_val <= node.split_value:
             self.search_kd_tree(node.left, region, found)
             
-        # Si la región se intercepta con la rama derecha (valores > split_value)
+        # If region intercepts right branch 
         if max_val > node.split_value:
              self.search_kd_tree(node.right, region, found)
 
